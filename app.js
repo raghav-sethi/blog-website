@@ -101,15 +101,20 @@ app.post("/compose", (req, res) => {
     postDate: date,
   });
 
-  newPost.save();
+  newPost.save((err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.redirect("/");
+    }
+  });
 
   // console.log(newPost);
   //redirecting to home route
-  res.redirect("/");
 });
 
 //Custom route with params
-app.get("/posts/:postName", (req, res) => {
+app.get("/posts/:postId", (req, res) => {
   // console.log(req.params.postName);
 
   //Finding post according to params
@@ -120,18 +125,13 @@ app.get("/posts/:postName", (req, res) => {
   //   }
   // });
 
-  Blog.find({}, (err, searchedBlogs) => {
+  Blog.findOne({ _id: req.params.postId }, (err, searchedBlog) => {
     if (err) {
       console.log(err);
     } else {
-      searchedBlogs.forEach((blog) => {
-        if (_.lowerCase(blog.postTitle) === _.lowerCase(req.params.postName)) {
-          console.log(blog);
-          res.render("post", {
-            startContent: homeStartingContent,
-            blog: blog,
-          });
-        }
+      res.render("post", {
+        startContent: homeStartingContent,
+        blog: searchedBlog,
       });
     }
   });
