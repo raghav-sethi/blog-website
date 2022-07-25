@@ -7,7 +7,9 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 
 //Connecting to mongo db
-mongoose.connect("mongodb://localhost:27017/blogDB");
+mongoose.connect(
+  "mongodb+srv://admin-raghav:test123@cluster0.mytgpse.mongodb.net/blogDB"
+);
 
 //Creating Schema for blog post
 const blogSchema = new mongoose.Schema({
