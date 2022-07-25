@@ -4,6 +4,23 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const _ = require("lodash");
+const mongoose = require("mongoose");
+
+//Connecting to mongo db
+mongoose.connect("mongodb://localhost:27017/blogDB");
+
+//Creating Schema for blog post
+const blogSchema = new mongoose.Schema({
+  postTitle: String,
+  postContent: String,
+  postDate: String,
+  lastUpdateOn: Date,
+  // comments: [{ commentBody: String, commentDate: Date }],
+  likes: Number,
+});
+
+//Creating model using blog schema
+const Blog = mongoose.model("Blog", blogSchema);
 
 //Global array to store all posts in
 const posts = [];
@@ -24,7 +41,17 @@ app.use(express.static("public"));
 
 //Rendering home page
 app.get("/", (req, res) => {
-  res.render("home", { startContent: homeStartingContent, posts: posts });
+  Blog.find({}, (err, searchedBlogs) => {
+    if (err) {
+      console.log(err);
+    } else {
+      // console.log(searchedBlogs);
+      res.render("home", {
+        startContent: homeStartingContent,
+        blogs: searchedBlogs,
+      });
+    }
+  });
 
   // console.log(posts);
 });
@@ -53,14 +80,30 @@ app.post("/compose", (req, res) => {
   // console.log(blogContent);
 
   //creating post object to store both title and content
-  const post = {
-    title: blogTitle,
-    content: blogContent,
-  };
+  // const post = {
+  //   title: blogTitle,
+  //   content: blogContent,
+  // };
   // console.log(post);
 
   //Pushing post to array posts
-  posts.push(post);
+  // posts.push(post);
+
+  const today = new Date();
+  const date = `${today.getDate()} - ${today.getMonth()} - ${today.getFullYear()}`;
+
+  // console.log(date);
+
+  //Sending the post data to the db
+  const newPost = new Blog({
+    postTitle: blogTitle,
+    postContent: blogContent,
+    postDate: date,
+  });
+
+  newPost.save();
+
+  // console.log(newPost);
   //redirecting to home route
   res.redirect("/");
 });
@@ -70,14 +113,29 @@ app.get("/posts/:postName", (req, res) => {
   // console.log(req.params.postName);
 
   //Finding post according to params
-  posts.forEach((post) => {
-    if (_.lowerCase(post.title) === _.lowerCase(req.params.postName)) {
-      //Rendering post page
-      res.render("post", { post: post });
+  // posts.forEach((post) => {
+  //   if (_.lowerCase(post.title) === _.lowerCase(req.params.postName)) {
+  //     //Rendering post page
+  //     res.render("post", { post: post });
+  //   }
+  // });
+
+  Blog.find({}, (err, searchedBlogs) => {
+    if (err) {
+      console.log(err);
+    } else {
+      searchedBlogs.forEach((blog) => {
+        if (_.lowerCase(blog.postTitle) === _.lowerCase(req.params.postName)) {
+          console.log(blog);
+          res.render("post", {
+            startContent: homeStartingContent,
+            blog: blog,
+          });
+        }
+      });
     }
   });
 });
-
 app.listen(3000, function () {
   console.log("Server started on port 3000");
 });
